@@ -6,6 +6,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -13,6 +14,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.lang.ArithmeticException
 import java.util.concurrent.TimeoutException
 
 /**
@@ -39,6 +41,11 @@ fun main() {
 fun exceptions() {
     val exceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
         println("Notifica al programador... $throwable in $coroutineContext")
+        println()
+        if (throwable is ArithmeticException) {
+            println("Mostrar mensaje de reintentar...")
+            println()
+        }
     }
 
     runBlocking {
@@ -56,6 +63,28 @@ fun exceptions() {
         globalScope.launch {
             delay(200)
             throw TimeoutException("Agotado el tiempo del servidor")
+        }
+
+        CoroutineScope(Job() + exceptionHandler).launch {
+            val result = async {
+                delay(500)
+                multiLambda(2, 3)  {
+                    if (it > 5) throw ArithmeticException("Division por cero")
+                }
+            }
+            println("Resultado: ${result.await()}")
+        }
+
+        val channel = Channel<String>()
+        CoroutineScope(Job()).launch(exceptionHandler) {
+            delay(800)
+            countries.forEach {
+                channel.send(it)
+                if (it.equals("Medellin")) channel.close()
+            }
+        }
+        channel.consumeEach {
+            println(it)
         }
     }
 }
