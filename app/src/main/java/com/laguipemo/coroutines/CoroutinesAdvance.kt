@@ -1,8 +1,11 @@
 package com.laguipemo.coroutines
 
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -10,6 +13,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.TimeoutException
 
 /**
  * Project: Coroutines
@@ -27,7 +31,33 @@ fun main() {
 //    closeChannel()
 //    produceChannel()
 //    pipelines()
-    bufferChannel()
+//    bufferChannel()
+    exceptions()
+    readLine()
+}
+
+fun exceptions() {
+    val exceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+        println("Notifica al programador... $throwable in $coroutineContext")
+    }
+
+    runBlocking {
+        newTopic("Manejo de excepciones")
+        launch {
+            try {
+                delay(100)
+//                throw Exception()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        val globalScope = CoroutineScope(Job() + exceptionHandler)
+        globalScope.launch {
+            delay(200)
+            throw TimeoutException("Agotado el tiempo del servidor")
+        }
+    }
 }
 
 fun bufferChannel() {
