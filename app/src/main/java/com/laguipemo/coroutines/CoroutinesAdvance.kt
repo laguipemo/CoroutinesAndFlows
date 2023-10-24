@@ -26,7 +26,45 @@ fun main() {
 //    basicChannel()
 //    closeChannel()
 //    produceChannel()
-    pipelines()
+//    pipelines()
+    bufferChannel()
+}
+
+fun bufferChannel() {
+    runBlocking {
+        newTopic("Buffer para canales")
+        val time = System.currentTimeMillis()
+        val channel = Channel<String>()
+        launch {
+            countries.forEach {
+                delay(100)
+                channel.send(it)
+            }
+            channel.close()
+        }
+
+        launch {
+            delay(1000)
+            channel.consumeEach { println(it) }
+            println("Time: ${System.currentTimeMillis() - time}ms")
+        }
+
+        val bufferTime = System.currentTimeMillis()
+        val bufferChannel = Channel<String>(3)
+        launch {
+            countries.forEach {
+                delay(100)
+                bufferChannel.send(it)
+            }
+            bufferChannel.close()
+        }
+
+        launch {
+            delay(1000)
+            bufferChannel.consumeEach { println(it) }
+            println("BufferTime: ${System.currentTimeMillis() - bufferTime}ms")
+        }
+    }
 }
 
 fun pipelines() {
