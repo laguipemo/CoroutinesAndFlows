@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -24,7 +25,42 @@ val countries = listOf("Santander", "Bogota", "Medellin", "Barranquilla", "Cali"
 fun main() {
 //    basicChannel()
 //    closeChannel()
-    produceChannel()
+//    produceChannel()
+    pipelines()
+}
+
+fun pipelines() {
+    runBlocking {
+        newTopic("Pipelines")
+        val citiesChannels = produceCities()
+        val foodsChannel = produceFoods(citiesChannels)
+        foodsChannel.consumeEach { println(it) }
+
+        citiesChannels.cancel()
+        foodsChannel.cancel()
+        println("Todo está 10/10")
+    }
+}
+
+fun CoroutineScope.produceFoods(cities: ReceiveChannel<String>): ReceiveChannel<String> = produce{
+    for (city in cities){
+        val food = getFoodByCity(city)
+        send("$food desde $city")
+    }
+}
+
+suspend fun getFoodByCity(city: String): String {
+    delay(300)
+    return when (city) {
+        "Santander" -> "Arepas"
+        "Bogota" -> "Pizza"
+        "Medellin" -> "Sancocho"
+        "Barranquilla" -> "Chicharrón"
+        "Cali" -> "Frijoles"
+        "Bucaramanga" -> "Tacos"
+        else -> "Sin datos"
+
+    }
 }
 
 fun produceChannel() {
