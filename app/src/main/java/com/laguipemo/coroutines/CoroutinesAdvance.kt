@@ -42,6 +42,7 @@ fun pipelines() {
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.produceFoods(cities: ReceiveChannel<String>): ReceiveChannel<String> = produce{
     for (city in cities){
         val food = getFoodByCity(city)
